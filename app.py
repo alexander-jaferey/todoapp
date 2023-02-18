@@ -25,11 +25,13 @@ class Todo(db.Model):
 
 @app.route('/todos/create', methods=['POST'])
 def create_todo():
-    description = request.form.get('description', '')
+    description = request.get_json()['description']
     todo = Todo(description=description)
     db.session.add(todo)
     db.session.commit()
-    return redirect(url_for('index'))
+    return jsonify({
+        'description': todo.description
+    })
 
 
 @app.route('/')
