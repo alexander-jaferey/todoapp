@@ -23,9 +23,18 @@ class Todo(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     description = db.Column(db.String(), nullable=False)
     completed = db.Column(db.Boolean, nullable=False, default=False)
+    list_id = db.Column(db.Integer, db.ForeignKey('todolists.id'),  nullable=False)
+    list = db.relationship('TodoList', back_populates='todos')
 
     def __repr__(self):
         return f'<Todo {self.id} {self.description}>'
+
+class TodoList(db.Model):
+    __tablename__ = 'todolists'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(), nullable=False)
+    todos = db.relationship('Todo', back_populates='list', lazy=True)
+
 
 @app.route('/todos/create', methods=['POST'])
 def create_todo():
@@ -82,5 +91,5 @@ def index():
 if __name__ == '__main__':
     with app.app_context():
         app.debug = True
-        db.create_all()
+        #db.create_all()
         app.run(host="0.0.0.0", port=5000)
