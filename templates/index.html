@@ -6,11 +6,15 @@
             .hidden {
                 display: none;
             }
+            form, h4 {
+                padding-left: 5px;
+            }
             ul {
                 list-style: none;
                 padding: 0;
                 margin: 0;
                 width: 300px;
+                padding-top: 15px;
             }
             li {
                 clear: both;
@@ -32,11 +36,14 @@
             .lists-wrapper, .todos-wrapper {
                 display: inline-block;
                 vertical-align: top;
+                padding-left: 20px;
+                padding-right: 20px;
             }
         </style>
     </head>
     <body>
         <div class="lists-wrapper">
+            <h4>To-do Lists</h4>
             <form id="new-list">
                 <input type="text" id="list-name" name="list-name" />
                 <input type="submit" value="Create" />
@@ -44,9 +51,11 @@
             <ul id="lists">
                 {% for list in lists %}
                 <li>
+                    <input class="list-completed" data-id="{{ list.id }}" type="checkbox" {% if list.completed %} checked {% endif %} />
                     <a href="/lists/{{ list.id }}">
                         {{ list.name }}
                     </a>
+                    <button class="list-delete" data-id="{{ list.id }}">&cross;</button>
                 </li>
                 {% endfor %}
             </ul>
@@ -60,7 +69,7 @@
             <div id="error" class="hidden">Something went wrong!</div>
             <ul id="todos">
                 {% for todo in todos %}
-                <li>
+                <li class="todo">
                     <input class="check-completed" data-id="{{ todo.id }}" type="checkbox" {% if todo.completed %} checked {% endif %} />
                     {{ todo.description }}
                     <button class="delete-button" data-id="{{ todo.id }}">&cross;</button>
@@ -93,6 +102,30 @@
                     })
                 }
             }
+            const listboxes = document.querySelectorAll('.list-completed');
+            for (let i = 0; i < listboxes.length; i++) {
+                const listbox = listboxes[i];
+                listbox.onchange = function(e) {
+                    console.log('event', e);
+                    const newCompleted = e.target.checked;
+                    const listId = e.target.dataset['id'];
+                    fetch('/lists/' + listId + '/set-completed', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            'completed': newCompleted
+                        }),
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    })
+                    .then(function() {
+                        document.getElementById('error').className = 'hidden';
+                    })
+                    .catch(function() {
+                        document.getElementById('error').className = '';
+                    })
+                }
+            }
             const delButtons = document.querySelectorAll('.delete-button');
             for (let i = 0; i < delButtons.length; i++) {
                 const delButton = delButtons[i];
@@ -104,6 +137,22 @@
                     .then(function() {
                         const item = e.target.parentElement;
                         item.remove();
+                    })
+                }
+            }
+            const listDels = document.querySelectorAll('.list-delete');
+            for (let i = 0; i < listDels.length; i++) {
+                const listDel = listDels[i];
+                listDel.onclick = function(e) {
+                    const listId = e.target.dataset['id'];
+                    fetch('/lists/' + listId, {
+                        method: 'DELETE',
+                    })
+                    .then(function() {
+                        const item = e.target.parentElement;
+                        const todos = document.getElementsByClassName('todo');
+                        item.remove();
+                        todos.remove();
                     })
                 }
             }
